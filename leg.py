@@ -51,10 +51,10 @@ class Leg:
     def tibia(self) -> Point:
         return self.tibia
 
-leg = Leg(25, 50, 75)
-leg.pose(30, -20, 50)
-target = leg.tibia
-leg.pose(0, 0, 0)
-alpha, beta, gamma = leg.set_target(target)
-print(f"Ожидали: alpha=30, beta=-20, gamma=50")
-print(f"Получили: alpha={alpha:.2f}, beta={beta:.2f}, gamma={gamma:.2f}")
+# leg = Leg(25, 50, 75)
+# leg.pose(30, -20, 50)
+# target = leg.tibia
+# leg.pose(0, 0, 0)
+# alpha, beta, gamma = leg.set_target(target)
+# print(f"Ожидали: alpha=30, beta=-20, gamma=50")
+# print(f"Получили: alpha={alpha:.2f}, beta={beta:.2f}, gamma={gamma:.2f}")
