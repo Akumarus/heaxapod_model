@@ -1,6 +1,6 @@
 
 import numpy as np
-from heaxapod_model.point import Point, step, roty, rotz
+from point import Point, step, roty, rotz
 
 
 class Leg:
@@ -32,6 +32,10 @@ class Leg:
 
     def __str__(self):
         return {"Leg Points \n {self.coxa}"}
+
+    def body(self) -> Point:
+        return self.body
+    
     def coxa(self) -> Point:
         return self.coxa
 
@@ -41,11 +45,11 @@ class Leg:
     def tibia(self) -> Point:
         return self.tibia
 
-leg = Leg(1, 1, 1)
-print(leg.coxa)
-print(leg.femur)
-print(leg.tibia)
-leg.pose(90, 0, 0)
-print(leg.coxa)
-print(leg.femur)
-print(leg.tibia)
+# leg = Leg(1, 1, 1)
+# print(leg.coxa)
+# print(leg.femur)
+# print(leg.tibia)
+# leg.pose(90, 0, 0)
+# print(leg.coxa)
+# print(leg.femur)
+# print(leg.tibia)
