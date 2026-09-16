@@ -19,6 +19,8 @@ app.layout = html.Div(
                     [
                         html.Label("Угол поворота Coxa (град)"),
                         dcc.Slider(id="coxa", min=-90, max=90, step=1, value=0, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
+                        dcc.Slider(id="femur", min=-90, max=90, step=1, value=0, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
+                        dcc.Slider(id="tibia", min=-90, max=90, step=1, value=0, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
                         html.Label("Частота вращения (град/сек)"),
                         dcc.Slider(id="speed", min=-360, max=360, step=10, value=90, marks={-360: "-360", 0: "0", 360: "360"}, updatemode="drag"),
                         dcc.Checklist(id="spin", options=[{"label": "Вращать", "value": "Вкл"}], value=[])
@@ -81,14 +83,16 @@ def add_line(fig, p0, p1, color="blue"):
 @app.callback(
     Output("model-graph", "figure"),
     Input("angle-store", "data"),
+    Input("femur", "value"),
+    Input("tibia", "value"),
     State("camera-store", "data"),
 )
 
-def update_graph(coxa_value, camera):
+def update_graph(alpha, beta, gamma, camera):
     leg1 = Leg(25, 50, 75)
-    leg1.pose(coxa_value, 0, 0)
+    leg1.pose(alpha, beta, gamma)
+    print(f"Alpha = {alpha}, beta = {beta}, gamma = {gamma}")
 
-    print(f"Coxa value = {coxa_value}")
     fig = go.Figure()
     add_line(fig, leg1.body, leg1.coxa, color="blue")
     add_line(fig, leg1.coxa, leg1.femur, color="blue")
