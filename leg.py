@@ -5,7 +5,7 @@ from point import Point, step, roty, rotz
 
 
 class Leg:
-    def __init__(self, coxa_len, femur_len, tibia_len):
+    def __init__(self, body: Point, coxa_len, femur_len, tibia_len):
         self.coxa_len = coxa_len
         self.femur_len = femur_len
         self.tibia_len = tibia_len
@@ -14,9 +14,10 @@ class Leg:
         self.beta = 0
         self.gamma = 0
 
-        self.body = Point(0, 0, 0, "body")
+        self.body = body
         self.coxa = self.femur = self.tibia = None
         self.pose(self.alpha, self.beta, self.gamma)
+        self.points = [self.body, self.coxa, self.femur, self.tibia]
 
     def pose(self, alpha, beta, gamma):
         self.alpha, self.beta, self.gamma = alpha, beta, gamma
@@ -31,13 +32,15 @@ class Leg:
         R = R @ roty(gamma)
         self.tibia = step(self.femur, self.tibia_len, R)
 
+        self.points = [self.body, self.coxa, self.femur, self.tibia]
+
     def set_target(self, target : Point):
         alpha, beta, gamma = solve_ik(self, target)
         self.pose(alpha, beta, gamma)
         return alpha, beta, gamma
 
     def __str__(self):
-        return {"Leg Points \n {self.coxa}"}
+        return f"Leg Points \n {self.coxa} \n {self.femur} \n {self.tibia} \n alpha={self.alpha}, beta={self.beta}, gamma={self.gamma}"
 
     def body(self) -> Point:
         return self.body

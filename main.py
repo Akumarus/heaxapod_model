@@ -2,7 +2,9 @@ import plotly.graph_objects as go
 
 from dash import Dash, html, dcc, Input, Output, State
 
+from hexapod
 from point import Point
+from body import Body
 from leg import Leg
 
 DEFAULT_CAMERA = dict(eye=dict(x=1.25, y=1.25, z=1.25))
@@ -17,6 +19,53 @@ app.layout = html.Div(
                 dcc.Interval(id="tick", interval=50, n_intervals=0, disabled=True),
                 html.Div(
                     [
+                        html.Label("Размеры корпуса"),
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        html.Label("F", style={"fontSize": "12px"}),
+                                        dcc.Input(id="body-f", type="number", value=30, min=0, step=1, style={"width": "40px"}),
+                                    ],
+                                    style={"marginRight": "10px"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Label("M", style={"fontSize": "12px"}),
+                                        dcc.Input(id="body-m", type="number", value=50, min=0, step=1, style={"width": "40px"}),
+                                    ],
+                                    style={"marginRight": "10px"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Label("S", style={"fontSize": "12px"}),
+                                        dcc.Input(id="body-s", type="number", value=50, min=0, step=1, style={"width": "40px"}),
+                                    ],
+                                    style={"marginRight": "10px"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Label("Coxa", style={"fontSize": "12px"}),
+                                        dcc.Input(id="body-f", type="number", value=30, min=0, step=1, style={"width": "40px"}),
+                                    ],
+                                    style={"marginRight": "10px"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Label("Femur", style={"fontSize": "12px"}),
+                                        dcc.Input(id="body-m", type="number", value=30, min=0, step=1, style={"width": "40px"}),
+                                    ],
+                                    style={"marginRight": "10px"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Label("Tibia", style={"fontSize": "12px"}),
+                                        dcc.Input(id="body-s", type="number", value=30, min=0, step=1, style={"width": "40px"}),
+                                    ],
+                                ),
+                            ],
+                            style={"display": "flex", "marginBottom": "20px"},
+                        ),
                         html.Label("Угол поворота Coxa (град)"),
                         dcc.Slider(id="coxa", min=-90, max=90, step=1, value=0, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
                         dcc.Slider(id="femur", min=-90, max=90, step=1, value=0, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
@@ -80,27 +129,87 @@ def add_line(fig, p0, p1, color="blue"):
         showlegend=False,
     ))
 
+def add_body(fig, body):
+    points = body.points + [body.points[0]]
+    xs = [p.x for p in points]
+    ys = [p.y for p in points]
+    zs = [p.z for p in points]
+
+    fig.add_trace(go.Scatter3d(
+        x=xs, y=ys, z=zs,
+        mode="lines+markers",
+        line=dict(color="red", width=4),
+        showlegend=False,
+    ))
+
+    fig.add_trace(go.Scatter3d(
+        x=[body.cog.x, body.head.x], 
+        y=[body.cog.y, body.head.y],
+        z=[body.cog.z, body.head.z],
+        mode="markers",
+        line=dict(color="red", width=4),
+        showlegend=False
+    ))
+
+    return fig
+
+def add_legs(fig, legs):
+    points = legs.points
+    xs = [p.x for p in points]
+    ys = [p.y for p in points]
+    zs = [p.z for p in points]
+
+    fig.add_trace(go.Scatter3d(
+        x=xs, y=ys, z=zs,
+        mode="lines+markers",
+        line=dict(color="red", width=4),
+        showlegend=False,
+    ))
+
+    return fig
+
 @app.callback(
     Output("model-graph", "figure"),
     Input("angle-store", "data"),
     Input("femur", "value"),
     Input("tibia", "value"),
+    Input("body-f", "value"),
+    Input("body-m", "value"),
+    Input("body-s", "value"),
     State("camera-store", "data"),
 )
-
-def update_graph(alpha, beta, gamma, camera):
-    leg1 = Leg(25, 50, 75)
-    leg1.pose(alpha, beta, gamma)
-    print(f"Alpha = {alpha}, beta = {beta}, gamma = {gamma}")
+def update_graph(alpha, beta, gamma, f, m, s, camera):
+    # body = Body(f, m, s)
+    # leg1 = Leg(body.points[0], 20, 20, 20)
+    # leg2 = Leg(body.points[1], 20, 20, 20)
+    # leg3 = Leg(body.points[2], 20, 20, 20)
+    # leg4 = Leg(body.points[3], -20, -20, -20)
+    # leg5 = Leg(body.points[4], -20, -20, -20)
+    # leg6 = Leg(body.points[5], -20, -20, -20)
+    # print(alpha, beta, gamma)
+    # leg1.pose(alpha, beta, gamma)
+    # leg2.pose(alpha, beta, gamma)
+    # leg3.pose(alpha, beta, gamma)
+    # leg4.pose(alpha, beta, gamma)
+    # leg5.pose(alpha, beta, gamma)
+    # leg6.pose(alpha, beta, gamma)
 
     fig = go.Figure()
-    add_line(fig, leg1.body, leg1.coxa, color="blue")
-    add_line(fig, leg1.coxa, leg1.femur, color="blue")
-    add_line(fig, leg1.femur, leg1.tibia, color="blue")
+    # add_body(fig, body=body)
+    # add_legs(fig, legs=leg1)
+    # add_legs(fig, legs=leg2)
+    # add_legs(fig, legs=leg3)
+    # add_legs(fig, legs=leg4)
+    # add_legs(fig, legs=leg5)
+    # add_legs(fig, legs=leg6)
 
-    fig.add_trace(go.Scatter3d(x=[-100, 100], y=[0, 0], z=[0, 0], mode="lines", line=dict(color="red", width=2), showlegend=False))
-    fig.add_trace(go.Scatter3d(x=[0, 0], y=[-100, 100], z=[0, 0], mode="lines", line=dict(color="green", width=2), showlegend=False))
-    fig.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[-100, 100], mode="lines", line=dict(color="blue", width=2), showlegend=False))
+    # add_line(fig, leg1.body, leg1.coxa, color="blue")
+    # add_line(fig, leg1.coxa, leg1.femur, color="blue")
+    # add_line(fig, leg1.femur, leg1.tibia, color="blue")
+
+    # fig.add_trace(go.Scatter3d(x=[-100, 100], y=[0, 0], z=[0, 0], mode="lines", line=dict(color="red", width=2), showlegend=False))
+    # fig.add_trace(go.Scatter3d(x=[0, 0], y=[-100, 100], z=[0, 0], mode="lines", line=dict(color="green", width=2), showlegend=False))
+    # fig.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[-100, 100], mode="lines", line=dict(color="blue", width=2), showlegend=False))
 
     fig.update_layout(
         scene=dict(
