@@ -9,6 +9,7 @@ class Body:
         "left-middle",
         "left-front",
     )
+    AXIS = (45, 0, -45, 180 + 45, 180, 180 - 45)
 
     def __init__(self, f, m, s):
         self.f = f

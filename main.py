@@ -1,8 +1,8 @@
 import plotly.graph_objects as go
-
+import numpy as np
 from dash import Dash, html, dcc, Input, Output, State
 
-from hexapod
+from hexapod import Hexapod
 from point import Point
 from body import Body
 from leg import Leg
@@ -25,42 +25,42 @@ app.layout = html.Div(
                                 html.Div(
                                     [
                                         html.Label("F", style={"fontSize": "12px"}),
-                                        dcc.Input(id="body-f", type="number", value=30, min=0, step=1, style={"width": "40px"}),
+                                        dcc.Input(id="body-f", type="number", value=20, min=0, step=1, style={"width": "40px"}),
                                     ],
                                     style={"marginRight": "10px"},
                                 ),
                                 html.Div(
                                     [
                                         html.Label("M", style={"fontSize": "12px"}),
-                                        dcc.Input(id="body-m", type="number", value=50, min=0, step=1, style={"width": "40px"}),
+                                        dcc.Input(id="body-m", type="number", value=40, min=0, step=1, style={"width": "40px"}),
                                     ],
                                     style={"marginRight": "10px"},
                                 ),
                                 html.Div(
                                     [
                                         html.Label("S", style={"fontSize": "12px"}),
-                                        dcc.Input(id="body-s", type="number", value=50, min=0, step=1, style={"width": "40px"}),
+                                        dcc.Input(id="body-s", type="number", value=40, min=0, step=1, style={"width": "40px"}),
                                     ],
                                     style={"marginRight": "10px"},
                                 ),
                                 html.Div(
                                     [
                                         html.Label("Coxa", style={"fontSize": "12px"}),
-                                        dcc.Input(id="body-f", type="number", value=30, min=0, step=1, style={"width": "40px"}),
+                                        dcc.Input(id="coxa-len", type="number", value=20, min=0, step=1, style={"width": "40px"}),
                                     ],
                                     style={"marginRight": "10px"},
                                 ),
                                 html.Div(
                                     [
                                         html.Label("Femur", style={"fontSize": "12px"}),
-                                        dcc.Input(id="body-m", type="number", value=30, min=0, step=1, style={"width": "40px"}),
+                                        dcc.Input(id="femur-len", type="number", value=20, min=0, step=1, style={"width": "40px"}),
                                     ],
                                     style={"marginRight": "10px"},
                                 ),
                                 html.Div(
                                     [
                                         html.Label("Tibia", style={"fontSize": "12px"}),
-                                        dcc.Input(id="body-s", type="number", value=30, min=0, step=1, style={"width": "40px"}),
+                                        dcc.Input(id="tibia-len", type="number", value=20, min=0, step=1, style={"width": "40px"}),
                                     ],
                                 ),
                             ],
@@ -68,8 +68,8 @@ app.layout = html.Div(
                         ),
                         html.Label("Угол поворота Coxa (град)"),
                         dcc.Slider(id="coxa", min=-90, max=90, step=1, value=0, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
-                        dcc.Slider(id="femur", min=-90, max=90, step=1, value=0, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
-                        dcc.Slider(id="tibia", min=-90, max=90, step=1, value=0, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
+                        dcc.Slider(id="femur", min=-90, max=90, step=1, value=-45, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
+                        dcc.Slider(id="tibia", min=-90, max=90, step=1, value=90, marks={-90: "-90", 0: "0", 90: "90"}, updatemode="drag"),
                         html.Label("Частота вращения (град/сек)"),
                         dcc.Slider(id="speed", min=-360, max=360, step=10, value=90, marks={-360: "-360", 0: "0", 360: "360"}, updatemode="drag"),
                         dcc.Checklist(id="spin", options=[{"label": "Вращать", "value": "Вкл"}], value=[])
@@ -168,6 +168,62 @@ def add_legs(fig, legs):
 
     return fig
 
+def add_ground(fig, size=150, z=0, color="lightgray"):
+    xs = np.linspace(-size, size, 2)
+    ys = np.linspace(-size, size, 2)
+    xx, yy = np.meshgrid(xs, xs)
+    zz = np.full_like(xx, z)
+
+    fig.add_trace(go.Surface(
+        x=xx, y=yy, z=zz,
+        opacity=0.3,
+        colorscale=[[0, color], [1, color]],
+        showscale=False,
+        hoverinfo="skip",
+    ))
+
+    return fig
+
+def add_polygon(fig, points, color="green", opacity=0.4, outline_color="darkgreen"):
+    """Строит закрашенный многоугольник по упорядоченным вершинам points."""
+    n = len(points)
+    if n < 3:
+        return fig
+
+    xs = [p.x for p in points]
+    ys = [p.y for p in points]
+    zs = [p.z for p in points]
+
+    # веерная триангуляция от вершины 0: (0,1,2), (0,2,3), (0,3,4), ...
+    i_idx = [0] * (n - 2)
+    j_idx = list(range(1, n - 1))
+    k_idx = list(range(2, n))
+
+    fig.add_trace(go.Mesh3d(
+        x=xs, y=ys, z=zs,
+        i=i_idx, j=j_idx, k=k_idx,
+        color=color,
+        opacity=opacity,
+        flatshading=True,
+        hoverinfo="skip",
+        showlegend=False,
+    ))
+
+    # контур многоугольника (замыкаем на первую точку)
+    xs_line = xs + [xs[0]]
+    ys_line = ys + [ys[0]]
+    zs_line = zs + [zs[0]]
+
+    fig.add_trace(go.Scatter3d(
+        x=xs_line, y=ys_line, z=zs_line,
+        mode="lines",
+        line=dict(color=outline_color, width=5),
+        showlegend=False,
+        hoverinfo="skip",
+    ))
+
+    return fig
+
 @app.callback(
     Output("model-graph", "figure"),
     Input("angle-store", "data"),
@@ -176,46 +232,35 @@ def add_legs(fig, legs):
     Input("body-f", "value"),
     Input("body-m", "value"),
     Input("body-s", "value"),
+    Input("coxa-len", "value"),
+    Input("femur-len", "value"),
+    Input("tibia-len", "value"),
     State("camera-store", "data"),
 )
-def update_graph(alpha, beta, gamma, f, m, s, camera):
-    # body = Body(f, m, s)
-    # leg1 = Leg(body.points[0], 20, 20, 20)
-    # leg2 = Leg(body.points[1], 20, 20, 20)
-    # leg3 = Leg(body.points[2], 20, 20, 20)
-    # leg4 = Leg(body.points[3], -20, -20, -20)
-    # leg5 = Leg(body.points[4], -20, -20, -20)
-    # leg6 = Leg(body.points[5], -20, -20, -20)
+def update_graph(alpha, beta, gamma, f, m, s, coxa_len, femur_len, tibia_len, camera):
+    hexapod = Hexapod(f, m, s, coxa_len, femur_len, tibia_len)
+    hexapod.update_pose(alpha, beta, gamma)
+    # contacts = hexapod.find_ground_contact()
+
+    # print(contacts)
     # print(alpha, beta, gamma)
-    # leg1.pose(alpha, beta, gamma)
-    # leg2.pose(alpha, beta, gamma)
-    # leg3.pose(alpha, beta, gamma)
-    # leg4.pose(alpha, beta, gamma)
-    # leg5.pose(alpha, beta, gamma)
-    # leg6.pose(alpha, beta, gamma)
-
+    
     fig = go.Figure()
-    # add_body(fig, body=body)
-    # add_legs(fig, legs=leg1)
-    # add_legs(fig, legs=leg2)
-    # add_legs(fig, legs=leg3)
-    # add_legs(fig, legs=leg4)
-    # add_legs(fig, legs=leg5)
-    # add_legs(fig, legs=leg6)
-
-    # add_line(fig, leg1.body, leg1.coxa, color="blue")
-    # add_line(fig, leg1.coxa, leg1.femur, color="blue")
-    # add_line(fig, leg1.femur, leg1.tibia, color="blue")
-
-    # fig.add_trace(go.Scatter3d(x=[-100, 100], y=[0, 0], z=[0, 0], mode="lines", line=dict(color="red", width=2), showlegend=False))
-    # fig.add_trace(go.Scatter3d(x=[0, 0], y=[-100, 100], z=[0, 0], mode="lines", line=dict(color="green", width=2), showlegend=False))
-    # fig.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[-100, 100], mode="lines", line=dict(color="blue", width=2), showlegend=False))
+    add_ground(fig)
+    # add_polygon(fig, contacts, color="green", opacity=0.4)
+    add_body(fig, body=hexapod.body)
+    add_legs(fig, legs=hexapod.legs[0])
+    add_legs(fig, legs=hexapod.legs[1])
+    add_legs(fig, legs=hexapod.legs[2])
+    add_legs(fig, legs=hexapod.legs[3])
+    add_legs(fig, legs=hexapod.legs[4])
+    add_legs(fig, legs=hexapod.legs[5])
 
     fig.update_layout(
         scene=dict(
             xaxis=dict(visible=False, range=[-100, 100], dtick=2, title="X"),
             yaxis=dict(visible=False, range=[-100, 100], dtick=2, title="Y"),
-            zaxis=dict(showticklabels=False, title="", range=[-100, 100], dtick=2),
+            zaxis=dict(visible=False, range=[-100, 100], dtick=2),
             bgcolor="rgba(0,0,0,0)",
             camera=camera or DEFAULT_CAMERA,
             aspectmode="cube",

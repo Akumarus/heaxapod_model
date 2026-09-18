@@ -11,8 +11,18 @@ class Hexapod:
 
     def update_pose(self, alpha, beta, gamma):
         for i in range(self.LEGS_NUM):
-            self.legs[i].pose(alpha=alpha, beta=beta, gamma=gamma)
-        
+            self.legs[i].pose(alpha=alpha + self.body.AXIS[i], beta=beta, gamma=gamma)
+
+    def find_ground_contact(self):
+        contacts = []
+        for leg in self.legs:
+            lowest = min([leg.body, leg.coxa, leg.femur, leg.tibia], key=lambda p: p.z)
+            contacts.append(lowest)
+        return contacts
+
+    
     def __str__(self):
         return "Hexapod:\n" + "\n".join(str(leg) for leg in self.legs)
+
+
 
